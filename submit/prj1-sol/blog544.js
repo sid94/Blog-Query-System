@@ -44,6 +44,9 @@ export default class Blog544 {
     this.meta = meta;
     this.options = options;
     this.validator = new Validator(meta);
+    this.users = []
+    this.articles = []
+    this.comments =[]
   }
 
   static async make(meta, options) {
@@ -58,9 +61,36 @@ export default class Blog544 {
 
   /** Create a blog object as per createSpecs and 
    * return id of newly created object 
+   * create users _json=errors/betty77.json id=betty77 firstName=Betty lastName=john email=b@gmail.com roles=[author]
    */
-  async create(category, createSpecs) {
+  async create(category, createSpecs) {	  
     const obj = this.validator.validate(category, 'create', createSpecs);
+    
+    if(category == "users")
+    {
+      let requestedId = obj.id
+      var found = false;
+      for(var i = 0; i < this.users.length; i++) {
+      if (this.users[i].id == requestedId) {
+        found = true;
+        break;
+       }
+      }
+      if(found == false){
+      	this.users.push(obj);
+      }
+      else{
+	 console.log("Id Already exist So dont add the entry")
+      }
+    }
+    else if(category == "articles")
+    {
+      this.articles.push(obj);
+    }
+    else if(category == "comments")
+    {
+      this.comments.push(obj)
+    }
     //@TODO
   }
 
@@ -70,8 +100,30 @@ export default class Blog544 {
    */
   async find(category, findSpecs={}) {
     const obj = this.validator.validate(category, 'find', findSpecs);
-    //@TODO
-    return [];
+    let retArr = []
+    let  count = findSpecs._count
+    if(category == "users"){
+      if(Object.keys(findSpecs).length === 0 && findSpecs.constructor === Object){
+        retArr = this.users.map(user =>({ id : user.id}))
+      }
+      else if(findSpecs != undefined && findSpecs != null && findSpecs._count != undefined)
+      {
+        for (var i = 0; i < this.users.length; i++) {
+          if(i < count){
+            retArr.push({id : this.users[i].id});
+          }
+          else
+          {
+            break;
+          }
+        }
+      }
+      else
+      {
+        retArr.push(this.users.find(x => x.id === findSpecs.id));
+      }
+    }
+    return retArr;
   }
 
   /** Remove up to one blog object from category with id == rmSpecs.id. */
@@ -87,6 +139,7 @@ export default class Blog544 {
     const obj = this.validator.validate(category, 'update', updateSpecs);
     //@TODO
   }
+
   
 }
 
