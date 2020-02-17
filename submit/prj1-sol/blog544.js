@@ -141,7 +141,7 @@ export default class Blog544 {
       if (isNullorUndefined(findSpecs)) {
         retArr = queryArr.map(obj => (obj));
         retArr = retArr.slice(0,DEFAULT_COUNT);
-      } else if (val.length == 1 && !isNullorUndefined(findSpecs._count) && isNullorUndefined(findSpecs.keywords)) {
+      } else if (val.length === 1 && !isNullorUndefined(findSpecs._count) && isNullorUndefined(findSpecs.keywords)) {
         let count = findSpecs._count;
         for (let i = 0; i < queryArr.length; i++) {
           if (i < count) {
@@ -237,7 +237,7 @@ export default class Blog544 {
         }
       } else if (category === "comments") {
         let index = this.comments.findIndex(x => x.id === rmSpecs.id);
-        if(index != -1){
+        if(index !== -1){
           this.comments.splice(index, 1);
         }
         else {
@@ -259,7 +259,7 @@ export default class Blog544 {
         }
         else {
           let index = this.articles.findIndex(x => x.id === rmSpecs.id);
-          if(index != -1){
+          if(index !== -1){
             this.articles.splice(index, 1);
           }
           else {
@@ -279,7 +279,7 @@ export default class Blog544 {
       queryArr =  await this.getCategory(category);
       let val = Object.keys(updateSpecs);
       let index = queryArr.findIndex(x => x[val[0]] === updateSpecs[val[0]]);
-      if(index != -1) {
+      if(index !== -1) {
         let obj = queryArr[index];
         let wrgProperty = false;
 
