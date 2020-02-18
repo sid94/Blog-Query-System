@@ -132,8 +132,7 @@ export default class Blog544 {
    *  list if no matching objects).  _count defaults to DEFAULT_COUNT.
    */
   async find(category, findSpecs={}) {
-    const obj = this.
-    validator.validate(category, 'find', findSpecs);
+    const obj = this.validator.validate(category, 'find', findSpecs);
     let retArr = [];
     let queryArr = [];
     let val = Object.keys(findSpecs);
@@ -151,19 +150,26 @@ export default class Blog544 {
           }
         }
       } else if (!isNullorUndefined(findSpecs.keywords)) {
-        let count = !isNullorUndefined(findSpecs._count) ? findSpecs._count : queryArr.length;
-        let addedObjCount = 1;
-        queryArr.forEach(function (newItem) {
-          if (findSpecs.keywords.every(val => newItem.keywords.includes(val)) && addedObjCount <= count) {
-            retArr.push(newItem);
-            addedObjCount += 1;
-            if (addedObjCount === count) {
-              return retArr
-            }
-          }
-        }, this)
+        let count = !isNullorUndefined(findSpecs._count) ? findSpecs._count : DEFAULT_COUNT;
+        let keylen = {};
+        let arrays = [];
+        findSpecs.keywords.forEach(function (key) {
+          let arr = queryArr.filter(obj => obj.keywords.includes(key));
+          arrays.push(arr);
+          keylen[key]= arr.length;
+        });
+        retArr = arrays.shift().filter(function(v) {
+          return arrays.every(function(a) {
+            return a.indexOf(v) !== -1;
+          });
+        });
+        retArr = retArr.slice(0,count);
+        if(!isNullorUndefined(keylen)){Object.keys(keylen).forEach((key)=> {console.log('keywords' +' : '+ keylen[key]);});}
+        if(!isNullorUndefined(retArr)) {return retArr;}
       } else {
         retArr = queryArr.filter(x => x[val[0]] === findSpecs[val[0]]);
+        !val.includes('id') ? console.log(val[0] + " : " + retArr.length) : "";
+        retArr = retArr.slice(0,DEFAULT_COUNT);
       }
       if(isNullorUndefined(retArr)){
         const errormsg = 'no ' + category +' for id ' + findSpecs[val[0]] + ' in find';
@@ -292,6 +298,9 @@ export default class Blog544 {
           }
         }
         if (!wrgProperty) {
+          if(obj.hasOwnProperty("updateTime")){
+            obj.updateTime = new Date();
+          }
           queryArr[index] = obj;
         }
         else{
