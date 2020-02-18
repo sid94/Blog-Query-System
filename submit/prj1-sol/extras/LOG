@@ -1,0 +1,378 @@
+#output usage message
+$ ./index.js
+(node:29865) ExperimentalWarning: The ESM module loader is experimental.
+index.js [-n|-c|-v] DATA_DIR
+
+#run with verbose option: will print # of matches for each index key
+$ ./index.js -v ~/cs544/data
+(node:29950) ExperimentalWarning: The ESM module loader is experimental.
+create users|articles|comments NAME=VALUE...
+clear clear all blog data
+find   users|articles|comments NAME=VALUE... NAME...
+help  output this message
+remove users|articles|comments NAME=VALUE...
+update users|articles|comments NAME=VALUE...
+
+#missing category
+>> find
+must provide category  users|articles|comments
+create users|articles|comments NAME=VALUE...
+...
+update users|articles|comments NAME=VALUE...
+
+#if no field specified, only id printed
+>> find users
+[
+  {
+    "id": "odette46"
+  },
+  {
+    "id": "betty74"
+  },
+  {
+    "id": "victor55"
+  },
+  {
+    "id": "samuel05"
+  },
+  {
+    "id": "victor59"
+  }
+]
+
+#can control number of results using _count
+>> find users _count=3
+[
+  {
+    "id": "odette46"
+  },
+  {
+    "id": "betty74"
+  },
+  {
+    "id": "victor55"
+  }
+]
+
+#print all fields for user victor59
+>> find users id=victor59 *
+[
+  {
+    "id": "victor59",
+    "firstName": "Victor",
+    "lastName": "Monroe",
+    "email": "victor59@yahoo.com",
+    "roles": [
+      "commenter"
+    ],
+    "creationTime": "2020-01-29T16:30:11.000Z",
+    "updateTime": "2020-01-29T16:30:11.000Z"
+  }
+]
+
+#bad search field
+>> find comments authorId=victor59 id creationTime
+BAD_FIELD: unknown comments field authorId for comments find
+
+#search comments for commenterId victor59,
+#printing id and creationTime
+#note number of index entries for commenterId=victor59
+>> find comments commenterId=victor59 id creationTime
+commenterId: 9 
+[
+  {
+    "id": "187.55035",
+    "creationTime": "2020-02-02T21:42:32.000Z"
+  },
+  {
+    "id": "858.37076",
+    "creationTime": "2020-02-02T07:41:29.000Z"
+  },
+  {
+    "id": "594.06964",
+    "creationTime": "2020-02-02T02:28:12.000Z"
+  },
+  {
+    "id": "833.42686",
+    "creationTime": "2020-02-01T12:35:30.000Z"
+  },
+  {
+    "id": "855.07870",
+    "creationTime": "2020-01-30T22:18:12.000Z"
+  }
+]
+
+
+#show articleId and commenterId for specific comment
+>> find comments id=855.07870 articleId commenterId
+[
+  {
+    "articleId": "87.97091",
+    "commenterId": "victor59"
+  }
+]
+
+#show info for corresponding article
+>> find articles id=87.97091 authorId title updateTime
+[
+  {
+    "authorId": "betty",
+    "title": "Books And Burglars",
+    "updateTime": "2020-01-29T15:22:49.000Z"
+  }
+]
+
+#find articles for keywords
+>> find articles keywords=[elm,typescript] _count=3 id keywords title
+keywords: 23
+keywords: 18
+[
+  {
+    "id": "40.71621",
+    "keywords": [
+      "loop",
+      "clojurescript",
+      "elm",
+      "typescript",
+      "javascript"
+    ],
+    "title": "Municipal Government"
+  },
+  {
+    "id": "35.35214",
+    "keywords": [
+      "elixir",
+      "dart",
+      "elm",
+      "typescript",
+      "json"
+    ],
+    "title": "Lotos Club Dinner In Honor Of Mark Twain"
+  },
+  {
+    "id": "74.31148",
+    "keywords": [
+      "typescript",
+      "elm",
+      "conditional",
+      "function",
+      "recursion"
+    ],
+    "title": "The Savage Club Dinner"
+  }
+]
+
+#no authorId field for users
+>> find users authorId=betty
+BAD_FIELD: unknown users field authorId for users find
+
+#find all info about betty
+>> find users id=betty *
+[
+  {
+    "id": "betty",
+    "firstName": "Betty",
+    "lastName": "Van Buren",
+    "email": "betty@gmail.com",
+    "roles": [
+      "author",
+      "commenter"
+    ],
+    "creationTime": "2019-12-26T23:02:38.000Z",
+    "updateTime": "2019-12-26T23:02:38.000Z"
+  }
+]
+
+#update betty's last name
+>> update users id=betty lastName=Harrison
+
+#show updated betty
+>> find users id=betty *
+[
+  {
+    "id": "betty",
+    "firstName": "Betty",
+    "lastName": "Harrison",
+    "email": "betty@gmail.com",
+    "roles": [
+      "author",
+      "commenter"
+    ],
+    "creationTime": "2019-12-26T23:02:38.000Z",
+    "updateTime": "2020-02-03T05:59:08.434Z"
+  }
+]
+
+#attempt to remove betty fails as betty is both an author and commenter
+#note -v printing of index lengths for authorId and commenterId
+>> remove users id=betty 
+authorId: 4
+commenterId: 5
+BAD_ID: users betty referenced by authorId for articles 16.69075, 87.97091, 50.47843, 61.30720
+BAD_ID: users betty referenced by commenterId for comments 599.08475, 297.55695, 700.66956, 806.89211, 231.40983
+
+#find some of betty's comments
+>> find comments commenterId=betty
+commenterId: 5
+[
+  {
+    "id": "599.08475"
+  },
+  {
+    "id": "297.55695"
+  },
+  {
+    "id": "700.66956"
+  },
+  {
+    "id": "806.89211"
+  },
+  {
+    "id": "231.40983"
+  }
+]
+
+#full details on a specific comment
+>> find comments id=231.40983 *
+[
+  {
+    "articleId": "28.71866",
+    "content": "But while he was seeking ... depend on the **weather**.\"\n\n",
+    "commenterId": "betty",
+    "creationTime": "2020-01-24T21:33:37.000Z",
+    "updateTime": "2020-01-24T21:33:37.000Z",
+    "id": "231.40983"
+  }
+]
+
+#can remove comment since no other object depends on it
+>> remove comments id=231.40983
+
+#its gone
+>> find comments id=231.40983 *
+
+#create a new user
+>> create users _json=errors/betty77.json
+"betty77"
+
+#cannot create again with same id
+>> create users _json=errors/betty77.json
+EXISTS: object with id betty77 already exists for users
+
+#show betty's info
+>> find users id=betty77 *
+[
+  {
+    "id": "betty77",
+    "firstName": "Betty",
+    "lastName": "Taylor",
+    "email": "betty77@yahoo.com",
+    "roles": [
+      "author",
+      "commenter"
+    ],
+    "creationTime": "2019-11-03T14:11:57.000Z",
+    "updateTime": "2019-11-03T14:11:57.000Z"
+  }
+]
+
+#can remove betty77 since nothing depends on it
+>> remove users id=betty77
+
+#its gone
+>> find users id=betty77 *
+
+#recreate
+>> create users _json=errors/betty77.json
+"betty77"
+
+#verify recreated
+>> find users id=betty77 *
+[
+  {
+    "id": "betty77",
+    "firstName": "Betty",
+    "lastName": "Taylor",
+    "email": "betty77@yahoo.com",
+    "roles": [
+      "author",
+      "commenter"
+    ],
+    "creationTime": "2019-11-03T14:11:57.000Z",
+    "updateTime": "2019-11-03T14:11:57.000Z"
+  }
+]
+
+#attempt to create user with a bad update time
+>> create users _json=errors/user-bad-update-time.json
+BAD_FIELD_VALUE: bad value: 2019-11-22T; the user update time must be a valid ISO-8601 date-time for users create
+
+#create a new article, prints out article id of newly created article
+>> create articles _json=errors/article.json
+"88.02388"
+
+#more details on article
+>> find articles id=88.02388 id authorId title creationTime
+[
+  {
+    "id": "88.02388",
+    "authorId": "betty77",
+    "title": "A New German Word",
+    "creationTime": "2020-01-23T17:57:06.000Z"
+  }
+]
+
+#can no longer remove betty77 as it has a dependent article
+>> remove users id=betty77 
+authorId: 1
+BAD_ID: users betty77 referenced by authorId for articles 88.02388
+
+#attempt to create article with bad author
+>> create articles _json=errors/article-bad-author-id.json
+BAD_ID: invalid id betty77x for users for create articles
+
+#bad json file specified for _json
+>> create comments _json=errors/comments.json articleId=88.02388
+cannot find json file at errors/comments.json
+MISSING_FIELD: missing comment content, commenter ID fields for comments create
+
+#create a new comment for above article
+>> create comments _json=errors/comment.json articleId=88.02388
+"866.54543"
+
+#bad article id
+>> create comments _json=errors/comment.json articleId=88.023883
+BAD_ID: invalid id 88.023883 for articles for create comments
+
+#find newly created comment
+>> find comments id=866.54543 *
+[
+  {
+    "content": "So ... **discover** the Snark\n\n",
+    "commenterId": "betty77",
+    "creationTime": "2020-01-28T08:38:38.000Z",
+    "updateTime": "2020-01-28T08:38:38.000Z",
+    "articleId": "88.02388",
+    "id": "866.54543"
+  }
+]
+
+#can not remove article as it is referenced by comment
+>> remove articles id=88.02388
+articleId: 1
+BAD_ID: articles 88.02388 referenced by articleId for comments 866.54543
+
+#bad article id
+>> remove articles id=88.023883
+BAD_ID: no articles for id 88.023883 in remove
+
+#must specify an articleId when creating a comment
+>> create comments _json=errors/comment-bad-commenter-id.json
+MISSING_FIELD: missing comment article ID fields for comments create
+
+#invalid commenterId when creating a comment
+>> create comments _json=errors/comment-bad-commenter-id.json articleId=88.02388
+BAD_ID: invalid id betty77x for users for create comments
+
+#typed ^D to terminate program
+>> $ 
