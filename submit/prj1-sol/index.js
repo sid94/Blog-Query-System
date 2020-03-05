@@ -338,7 +338,6 @@ function getArgs(args) {
       console.error(`unknown option ${opt}`);
       usage();
     }
-    options[option] = true;
   }
   return [arg, options];
 }
