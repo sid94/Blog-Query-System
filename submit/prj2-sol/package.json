@@ -11,6 +11,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "mongodb": "^3.5.4"
+    "assert": "^2.0.0",
+    "mongodb": "^3.5.4",
+    "require": "^2.4.20"
   }
 }

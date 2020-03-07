@@ -46,6 +46,7 @@ export default class Validator {
       }
       else {
 	out[name] = info.data ? info.data(value) : value;
+	if(name === 'id'){out._id = out.id; delete out.id;}
       }
     } //for
     if (required.size > 0) {
