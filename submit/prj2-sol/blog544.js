@@ -117,7 +117,8 @@ export default class Blog544 {
       let article = randomId(obj);
       const userExist = await this.find('users',{id:obj.authorId});
       if(isNullorUndefined(userExist)){
-        const errorMsg = 'Author Id' +obj.authorId + ' associated with this article does not exists for users';
+        await this.clear();
+        const errorMsg = 'Author Id ' +obj.authorId + ' associated with this article does not exists for users';
         throw [new BlogError('EXISTS', errorMsg)];
       }
       const articleExist = await this.find(category,{id:article._id});
@@ -133,7 +134,7 @@ export default class Blog544 {
       let comment = randomId(obj);
       let articleExist  = await this.find('articles',{id:obj.articleId});
       if(isNullorUndefined(articleExist)){
-        const errorMsg = 'Article Id' +obj.articleId + ' associated with this comment does not exists for articles';
+        const errorMsg = 'Article Id ' +obj.articleId + ' associated with this comment does not exists for articles';
         throw [new BlogError('EXISTS', errorMsg)];
       }
       let commentExist = await this.find(category,{id:obj._id});
@@ -234,10 +235,7 @@ export default class Blog544 {
   static async connect(dbUrl){
     const mongoClient = new mongo.MongoClient(dbUrl,MONGO_CONNECT_OPTIONS);
     const client = await mongoClient.connect();
-    return {
-      client:client,
-      db:client.db('data')
-    }
+    return {client:client, db:client.db('data')}
   }
 
   async getCategory(category){
