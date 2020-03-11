@@ -7,6 +7,9 @@ export default class Validator {
   constructor(meta) {
     const xInfo = {};
     const actions = {};
+    meta.users.push(restrictMongoId);
+    meta.articles.push(restrictMongoId);
+    meta.comments.push(restrictMongoId);
     for (const [category, infos] of Object.entries(meta)) {
       xInfo[category] =
 	Object.fromEntries(infos.map(info => [info.name, info]));
@@ -66,6 +69,8 @@ export default class Validator {
   }
   
 };
+
+const restrictMongoId = {friendlyName : 'mongo internal', forbidden : ['create', 'find', 'remove', 'update'], name : '_id'}
 
 function makeActions(infos) {
   const acts = [ 'create', 'find', 'update', 'remove', ];

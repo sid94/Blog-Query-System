@@ -48,27 +48,30 @@ export default class Blog544 {
   constructor(meta, options) {
     //@TODO
     this.meta = meta;
-    this.indexes = getEligibleIndexes(meta);
     this.options = options;
     this.client = options.client;
     this.db = options.db;
-    this.client1 = {};
-    this.db1 = {};
     this.validator = new Validator(meta);
-    this.usersIndex = this.db.collection('users').createIndexes(this.indexes.users);
-    this.articlesIndex = this.db.collection('articles').createIndexes(this.indexes.articles);
-    this.commentsIndex = this.db.collection('comments').createIndexes(this.indexes.comments);
     this.users = this.db.collection('users');
     this.articles = this.db.collection('articles');
     this.comments = this.db.collection('comments');
   }
 
+  static async consFactoryMethod(meta, options){
+
+  }
+
   /** options.dbUrl contains URL for mongo database */
   static async make(meta, options) {
+    let collection={};
     if(!isNullorUndefined(options) && !isNullorUndefined(options.dbUrl) && /(mongodb:)\/\/([a-z]+\:[0-9]+)/.test(options.dbUrl)){
       const dbDet = await this.connect(options.dbUrl);
       if(!isNullorUndefined(dbDet) && !isNullorUndefined(dbDet.client) && !isNullorUndefined(dbDet.db)){
         options.client  = dbDet.client; options.db = dbDet.db;
+        this.indexes = getEligibleIndexes(meta);
+        this.users =await  dbDet.db.collection('users').createIndexes(this.indexes.users);
+        this.articles =await dbDet.db.collection('articles').createIndexes(this.indexes.articles);
+        this.comments =await dbDet.db.collection('comments').createIndexes(this.indexes.comments);
       }else{
         throw [ new BlogError(`DB FAILURE', 'Unable to connect to DB`) ];
       }
@@ -190,18 +193,18 @@ export default class Blog544 {
         if (errmsg.length > 0) {
           throw errmsg;
         }else {
-          await this.users.remove({_id: rmSpecs.id});
+          await this.users.deleteOne({_id: rmSpecs.id});
         }
       } else if (category === 'articles') {
         const comments = await this.find('comments',{articleId: rmSpecs.id});
         if (comments.length === 0) {
-          await this.articles.remove({_id: rmSpecs.id});
+          await this.articles.deleteOne({_id: rmSpecs.id});
         }else {
           const errmsg = category + ' ' + rmSpecs.id + ' referenced by articleId  for comments ' + comments.map(val => val.id).toString();
           throw [new BlogError('BAD_ID', errmsg)];
         }
       } else {
-        await this.comments.remove({_id: rmSpecs.id});
+        await this.comments.deleteOne({_id: rmSpecs.id});
       }
     }else {
       const errormsg = 'no ' + category +' for id ' + rmSpecs.id + ' in remove';
@@ -258,6 +261,7 @@ const DEFAULT_COUNT = 5;
 const DEFAULT_INDEX = 0;
 
 const MONGO_CONNECT_OPTIONS = {useUnifiedTopology: true};
+const restrictMongoId = {friendlyName : 'mongo internal', forbidden : ['create', 'find', 'remove', 'update'], name : '_id'}
 
 function isNullorUndefined(val){
   return (val === undefined || val == null || val.length <= 0 || Object.keys(val).length === 0);
