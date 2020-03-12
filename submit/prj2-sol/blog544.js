@@ -182,8 +182,8 @@ export default class Blog544 {
     const obj = this.validator.validate(category, 'remove', rmSpecs);
     if(!isNullorUndefined(await this.find(category,{id : rmSpecs.id}))) {
       if (category === 'users') {
-        const articles = await this.find('articles',{authorId: rmSpecs.id});
-        const comments = await this.find('comments',{commenterId: rmSpecs.id});
+        const articles = await this.find('articles',{authorId: rmSpecs.id , _count : 100});
+        const comments = await this.find('comments',{commenterId: rmSpecs.id, _count : 100});
         let errmsg = [];
         if (!isNullorUndefined(articles)) {
           errmsg.push(new BlogError('BAD_ID', category + ' ' + rmSpecs.id + ' referenced by authorId for articles ' + articles.map(val => val.id).toString() + '\n'));
@@ -197,7 +197,7 @@ export default class Blog544 {
           await this.users.deleteOne({_id: rmSpecs.id});
         }
       } else if (category === 'articles') {
-        const comments = await this.find('comments',{articleId: rmSpecs.id});
+        const comments = await this.find('comments',{articleId: rmSpecs.id, _count : 100});
         if (comments.length === 0) {
           await this.articles.deleteOne({_id: rmSpecs.id});
         }else {
