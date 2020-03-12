@@ -117,7 +117,7 @@ export default class Blog544 {
       let article = randomId(obj);
       const userExist = await this.find('users',{id:obj.authorId});
       if(isNullorUndefined(userExist)){
-        await this.clear();
+        //await this.clear();
         const errorMsg = 'Author Id ' +obj.authorId + ' associated with this article does not exists for users';
         throw [new BlogError('EXISTS', errorMsg)];
       }
