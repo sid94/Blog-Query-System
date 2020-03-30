@@ -28,9 +28,182 @@ function setupRoutes(app) {
   app.use(cors());
   app.use(bodyParser.json());
   //@TODO
+  app.get('/', appNavigation(app));
+  app.get('/meta', metaInfo(app));
+  app.get('/users/:id', findInfoById(app,'users'));
+  app.get('/articles/:id', findInfoById(app,'articles'));
+  app.get('/comments/:id', findInfoById(app,'comments'));
+  app.get('/users', categoryInfo(app));
+  app.get('/articles', categoryInfo(app));
+  app.get('/comments', categoryInfo(app));
+  app.delete('/users/:id', deleteInfoById(app,'users'));
+  app.delete('/articles/:id', deleteInfoById(app,'articles'));
+  app.delete('/comments/:id', deleteInfoById(app,'comments'));
+  app.post('/users', createById(app,'users'));
+  app.post('/articles', createById(app,'articles'));
+  app.post('/comments', createById(app,'comments'));
+  app.patch('/users/:id', updateById(app,'users'));
+  app.patch('/articles/:id', updateById(app,'articles'));
+  app.patch('/comments/id', updateById(app,'comments'));
+  app.use(doErrors());
+
 }
 
 /****************************** Handlers *******************************/
+
+function appNavigation(app) {
+  return errorWrap( function(req, res) {
+    try {
+      let url = requestUrl(req);
+      let metaKeys = Object.keys(app.locals.meta);
+      metaKeys.push("self");
+      metaKeys.push("meta");
+      let resArr = [];
+      let resObj = {};
+      metaKeys.forEach((val,i,arr)=> {
+        let obj = {};
+        if(val === "self"){
+          obj =  hateoas(url,val,val);
+        }
+        else if(val === "meta") {
+          obj =  hateoas(url,val,"describedby",{},val);
+        }
+        else{
+          obj =  hateoas(url,val,"collections",{},val);
+        }
+        resArr.push(obj);
+      });
+      resObj.links = resArr;
+      //res.send("hello world");
+      res.json(resObj);
+    }
+    catch (err) {
+      const mapped = mapError(err);
+      res.status(mapped.status).json(mapped);
+    }
+  }
+  )
+}
+
+function metaInfo(app) {
+  return errorWrap(function (req,res) {
+    try {
+      let url = requestUrl(req);
+      let meta = app.locals.meta;
+      let hatObj = hateoas(url,'self','self');
+      meta.links = [hatObj];
+      res.json(meta);
+    }
+    catch(err) {
+      const mapped = mapError(err);
+      res.status(mapped.status).json(mapped);
+    }
+  })
+}
+
+function categoryInfo(app) {
+  return errorWrap(async function (req,res) {
+    try {
+      let resObj = {};
+      const q = req.query || {};
+      let reqUrl = requestUrl(req);
+      let cat = reqUrl.substring(reqUrl.lastIndexOf("/")+1, reqUrl.length + 1);
+      let catObj = await app.locals.model.find(cat,q);
+      catObj.forEach((val,i,arr)=>{
+        val.links = [hateoas(reqUrl,'self','self',q,val.id)]
+      });
+      let links = [];
+      if(q.hasOwnProperty('_count') && q.hasOwnProperty('_index')){
+        if(catObj.length >=  q._count){const nextLink = hateoas(reqUrl,'next','next',q);links.push(nextLink)};
+        if(q._index > 0){const prevLink = hateoas(reqUrl,'prev','prev',q);links.push(prevLink)};
+      }
+      else if (q.hasOwnProperty('_count')) {
+        q._index = q._count;
+        if(catObj.length >=  q._count){const nextLink = hateoas(reqUrl,'next','next',q);links.push(nextLink)};
+        if(q._index > 0){const prevLink = hateoas(reqUrl,'prev','prev',q);links.push(prevLink)};
+      }
+      else if(q.hasOwnProperty('_index')){
+        const nextLink = hateoas(reqUrl,'next','next',q);links.push(nextLink);
+        if(q._index > 0){const prevLink = hateoas(reqUrl,'prev','prev',q);links.push(prevLink);}
+      }
+      else if(isNullorUndefined(q)){
+        const nextLink = hateoas(reqUrl,'next','next',q);
+        links.push(nextLink);
+      }
+      const selfLink = hateoas(reqUrl,'self','self',q);
+      links.push(selfLink);
+      resObj[cat] = catObj;
+      resObj.links = links;
+      res.json(resObj);
+    }
+    catch(err) {
+      const mapped = mapError(err);
+      res.status(mapped.status).json(mapped);
+    }
+  })
+}
+
+function findInfoById(app,category) {
+  return errorWrap(async function (req,res) {
+    try {
+      //used simpsons users-ws code directly
+      let resObj = {};
+      resObj[category] = await app.locals.model.find(category,req.params);
+      res.send(resObj);
+    }
+    catch(err) {
+      const mapped = mapError(err);
+      res.status(mapped.status).json(mapped);
+    }
+  })
+}
+
+function deleteInfoById(app,category) {
+  return errorWrap(async function (req,res) {
+    try {
+      //used simpsons users-ws code directly
+      const id = req.params.id;
+      const results = await app.locals.model.remove(category,{ id: id });
+      res.sendStatus(OK);
+    }
+    catch(err) {
+      const mapped = mapError(err);
+      res.status(mapped.status).json(mapped);
+    }
+  })
+}
+
+function createById(app,category) {
+  return errorWrap(async function (req,res) {
+    try {
+      //used simpsons users-ws code directly
+      const obj = req.body;
+      const results = await app.locals.model.create(category,obj);
+      res.append('Location', requestUrl(req) + '/' + results.id);
+      res.sendStatus(CREATED);
+    }
+    catch(err) {
+      const mapped = mapError(err);
+      res.status(mapped.status).json(mapped);
+    }
+  })
+}
+
+function updateById(app, category) {
+  return errorWrap(async function (req,res) {
+    try {
+      //used simpsons users-ws code directly
+      const patch = Object.assign({}, req.body);
+      patch.id = req.params.id;
+      const results = await app.locals.model.update(category,patch);
+      res.sendStatus(OK);
+    }
+    catch(err) {
+      const mapped = mapError(err);
+      res.status(mapped.status).json(mapped);
+    }
+  })
+}
 
 //@TODO
 
@@ -42,7 +215,7 @@ function setupRoutes(app) {
 function doErrors(app) {
   return async function(err, req, res, next) {
     res.status(SERVER_ERROR);
-    res.json({ code: 'SERVER_ERROR', message: err.message });
+    await res.json({ code: 'SERVER_ERROR', message: err.message });
     console.error(err);
   };
 }
@@ -64,7 +237,7 @@ function errorWrap(handler) {
 const ERROR_MAP = {
   BAD_CATEGORY: NOT_FOUND,
   EXISTS: CONFLICT,
-}
+};
 
 /** Map domain/internal errors into suitable HTTP errors.  Return'd
  *  object will have a "status" property corresponding to HTTP status
@@ -85,6 +258,8 @@ function mapError(err) {
 
 /****************************** Utilities ******************************/
 
+
+
 /** Return original URL for req (excluding query params)
  *  Ensures that url does not end with a /
  */
@@ -94,6 +269,51 @@ function requestUrl(req) {
   return `${req.protocol}://${req.hostname}:${port}${url}`;
 }
 
+function isNullorUndefined(val){
+  return (val === undefined || val == null || val.length <= 0 || Object.keys(val).length === 0);
+}
+
+function hateoas(link,name,rel,q = {},param){
+  try{
+    let query  = Object.assign({}, q);
+    param = param || '';
+    param = isNullorUndefined(param) ? param : '/'+ param;
+    let queryString='';
+    if(isNullorUndefined(param)) {
+      let prevIndex, nextIndex;
+      if (query.hasOwnProperty('_count') && query.hasOwnProperty('_index') && name !== "self") {
+        prevIndex = parseInt(query._index) - parseInt(query._count);
+        nextIndex = parseInt(query._index) + parseInt(query._count);
+        if (name === "prev") {query._index = prevIndex} else {query._index = nextIndex}
+      }
+      else if (query.hasOwnProperty('_count') && name !== "self") {
+        prevIndex = parseInt(query._index) - parseInt(query._count);
+        nextIndex = parseInt(query._index) + parseInt(query._count);
+        if (name === "prev") {query._index = prevIndex} else {query._index = nextIndex}
+      }
+      else if (query.hasOwnProperty('_index') && name !== "self") {
+        prevIndex = parseInt(query._index) - DEFAULT_COUNT;
+        nextIndex = parseInt(query._index) + DEFAULT_COUNT;
+        if (name === "prev") {query._index = prevIndex} else {query._index = nextIndex}
+      }
+      else if (isNullorUndefined(query)) {
+        nextIndex = DEFAULT_COUNT;
+        if (name === "next") {query._index = nextIndex}
+      }
+      queryString = Object.keys(query).map(key => key + '=' + query[key]).join('&');
+      queryString = isNullorUndefined(queryString) ? '' : '?'+ queryString;
+    }
+
+    let retObj = {};
+    retObj.link = name === "prev" ? link + param + queryString :  link + param + queryString;
+    retObj.name = name;
+    retObj.rel = rel;
+    return retObj
+  }
+  catch(e){
+    console.log(e);
+  }
+}
 
 const DEFAULT_COUNT = 5;
 
