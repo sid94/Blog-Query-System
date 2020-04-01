@@ -118,9 +118,10 @@ function categoryInfo(app) {
         if(q._index > 0){const prevLink = hateoas(reqUrl,'prev','prev',q);links.push(prevLink)};
       }
       else if (q.hasOwnProperty('_count')) {
-        q._index = q._count;
-        if(catObj.length >=  q._count){const nextLink = hateoas(reqUrl,'next','next',q);links.push(nextLink)};
-        if(q._index > 0){const prevLink = hateoas(reqUrl,'prev','prev',q);links.push(prevLink)};
+        let queryS = Object.assign({},q);
+        queryS._index = 0;
+        if(catObj.length >=  q._count){const nextLink = hateoas(reqUrl,'next','next',queryS);links.push(nextLink)};
+        //if(q._index > 0){const prevLink = hateoas(reqUrl,'prev','prev',q);links.push(prevLink)};
       }
       else if(q.hasOwnProperty('_index')){
         const nextLink = hateoas(reqUrl,'next','next',q);links.push(nextLink);
@@ -148,7 +149,11 @@ function findInfoById(app,category) {
     try {
       //used simpsons users-ws code directly
       let resObj = {};
-      resObj[category] = await app.locals.model.find(category,req.params);
+      let reqUrl = requestUrl(req);
+      let arr = await app.locals.model.find(category,req.params);
+      let obj = arr[0];
+      obj.links = [hateoas(reqUrl,'self','self')];
+      resObj[category] = obj;
       res.send(resObj);
     }
     catch(err) {
@@ -287,7 +292,7 @@ function hateoas(link,name,rel,q = {},param){
         if (name === "prev") {query._index = prevIndex} else {query._index = nextIndex}
       }
       else if (query.hasOwnProperty('_count') && name !== "self") {
-        prevIndex = parseInt(query._index) - parseInt(query._count);
+        //prevIndex = parseInt(query._index) - parseInt(query._count);
         nextIndex = parseInt(query._index) + parseInt(query._count);
         if (name === "prev") {query._index = prevIndex} else {query._index = nextIndex}
       }
@@ -305,7 +310,7 @@ function hateoas(link,name,rel,q = {},param){
     }
 
     let retObj = {};
-    retObj.link = name === "prev" ? link + param + queryString :  link + param + queryString;
+    retObj.url = name === "prev" ? link + param + queryString :  link + param + queryString;
     retObj.name = name;
     retObj.rel = rel;
     return retObj
