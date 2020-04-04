@@ -89,8 +89,9 @@ function metaInfo(app) {
   return errorWrap(function (req,res) {
     try {
       let url = requestUrl(req);
-      let meta = app.locals.meta;
+      let meta = Object.assign({},app.locals.meta);
       let hatObj = hateoas(url,'self','self');
+      hatObj.href = hatObj.url; delete hatObj.url;
       meta.links = [hatObj];
       res.json(meta);
     }
@@ -110,7 +111,9 @@ function categoryInfo(app) {
       let cat = reqUrl.substring(reqUrl.lastIndexOf("/")+1, reqUrl.length + 1);
       let catObj = await app.locals.model.find(cat,q);
       catObj.forEach((val,i,arr)=>{
-        val.links = [hateoas(reqUrl,'self','self',q,val.id)]
+        let a = hateoas(reqUrl,'self','self',q,val.id);
+        a.href = a.url; delete a.url;
+        val.links = [a];
       });
       let links = [];
       if(q.hasOwnProperty('_count') && q.hasOwnProperty('_index')){
@@ -189,7 +192,7 @@ function createById(app,category) {
       const obj = req.body;
       const results = await app.locals.model.create(category,obj);
       res.append('Location', requestUrl(req) + '/' + results.id);
-      res.sendStatus(CREATED);
+      res.json({});
     }
     catch(err) {
       const mapped = mapError(err);
@@ -313,10 +316,7 @@ function hateoas(link,name,rel,q = {},param,resObj){
       queryString = isNullorUndefined(queryString) ? '' : '?'+ queryString;
     }
 
-    let retObj = {};
-    retObj.url = name === "prev" ? link + param + queryString :  link + param + queryString;
-    retObj.name = name;
-    retObj.rel = rel;
+    let retObj = { url :name === "prev" ? link + param + queryString :  link + param + queryString ,name : name , rel : rel };
     return retObj
   }
   catch(e){
