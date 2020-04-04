@@ -127,12 +127,11 @@ function categoryInfo(app) {
         if(q._index > 0){const prevLink = hateoas(reqUrl,'prev','prev',q,"",resObj);links.push(prevLink);}
       }
       else if(!q.hasOwnProperty('_count') && !q.hasOwnProperty('_index') && !isNullorUndefined(q)){
-        q._index = 0;
-        const nextLink = hateoas(reqUrl,'next','next',q,"",resObj);links.push(nextLink);
+
+        if(catObj.length >= DEFAULT_COUNT){ q._index = 0; const nextLink = hateoas(reqUrl,'next','next',q,"",resObj);links.push(nextLink);}
       }
       else if(isNullorUndefined(q)){
-        const nextLink = hateoas(reqUrl,'next','next',q,"",resObj);
-        links.push(nextLink);
+        if(catObj.length >= DEFAULT_COUNT){const nextLink = hateoas(reqUrl,'next','next',q,"",resObj); links.push(nextLink);}
       }
       const selfLink = hateoas(reqUrl,'self','self',q);
       links.push(selfLink);
@@ -154,10 +153,12 @@ function findInfoById(app,category) {
       let resObj = {};
       let reqUrl = requestUrl(req);
       let arr = await app.locals.model.find(category,req.params);
-      let obj = arr[0];
-      obj.links = [hateoas(reqUrl,'self','self')];
-      resObj[category] = obj;
-      res.send(resObj);
+      if(!isNullorUndefined(arr)){
+        let obj = arr[0];
+        obj.links = [hateoas(reqUrl,'self','self')];
+        resObj[category] = obj;
+        res.send(resObj);
+      }else{res.json({ [category] : arr })}
     }
     catch(err) {
       const mapped = mapError(err);
@@ -172,7 +173,7 @@ function deleteInfoById(app,category) {
       //used simpsons users-ws code directly
       const id = req.params.id;
       const results = await app.locals.model.remove(category,{ id: id });
-      res.sendStatus(OK);
+      res.json({})
     }
     catch(err) {
       const mapped = mapError(err);
@@ -204,7 +205,7 @@ function updateById(app, category) {
       const patch = Object.assign({}, req.body);
       patch.id = req.params.id;
       const results = await app.locals.model.update(category,patch);
-      res.sendStatus(OK);
+      res.json({});
     }
     catch(err) {
       const mapped = mapError(err);
