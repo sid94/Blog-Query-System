@@ -114,21 +114,24 @@ function categoryInfo(app) {
       });
       let links = [];
       if(q.hasOwnProperty('_count') && q.hasOwnProperty('_index')){
-        if(catObj.length >=  q._count){const nextLink = hateoas(reqUrl,'next','next',q);links.push(nextLink)};
-        if(q._index > 0){const prevLink = hateoas(reqUrl,'prev','prev',q);links.push(prevLink)};
+        if(catObj.length >=  q._count){const nextLink = hateoas(reqUrl,'next','next',q,"",resObj);links.push(nextLink); }
+        if(q._index > 0){const prevLink = hateoas(reqUrl,'prev','prev',q,"",resObj);links.push(prevLink); }
       }
       else if (q.hasOwnProperty('_count')) {
         let queryS = Object.assign({},q);
         queryS._index = 0;
-        if(catObj.length >=  q._count){const nextLink = hateoas(reqUrl,'next','next',queryS);links.push(nextLink)};
-        //if(q._index > 0){const prevLink = hateoas(reqUrl,'prev','prev',q);links.push(prevLink)};
+        if(catObj.length >=  q._count){const nextLink = hateoas(reqUrl,'next','next',queryS,"",resObj);links.push(nextLink); }
       }
       else if(q.hasOwnProperty('_index')){
-        const nextLink = hateoas(reqUrl,'next','next',q);links.push(nextLink);
-        if(q._index > 0){const prevLink = hateoas(reqUrl,'prev','prev',q);links.push(prevLink);}
+        if(catObj.length > 0 && catObj.length >= q._index) { const nextLink = hateoas(reqUrl,'next','next',q,"",resObj);links.push(nextLink); }
+        if(q._index > 0){const prevLink = hateoas(reqUrl,'prev','prev',q,"",resObj);links.push(prevLink);}
+      }
+      else if(!q.hasOwnProperty('_count') && !q.hasOwnProperty('_index') && !isNullorUndefined(q)){
+        q._index = 0;
+        const nextLink = hateoas(reqUrl,'next','next',q,"",resObj);links.push(nextLink);
       }
       else if(isNullorUndefined(q)){
-        const nextLink = hateoas(reqUrl,'next','next',q);
+        const nextLink = hateoas(reqUrl,'next','next',q,"",resObj);
         links.push(nextLink);
       }
       const selfLink = hateoas(reqUrl,'self','self',q);
@@ -278,7 +281,7 @@ function isNullorUndefined(val){
   return (val === undefined || val == null || val.length <= 0 || Object.keys(val).length === 0);
 }
 
-function hateoas(link,name,rel,q = {},param){
+function hateoas(link,name,rel,q = {},param,resObj){
   try{
     let query  = Object.assign({}, q);
     param = param || '';
@@ -287,23 +290,23 @@ function hateoas(link,name,rel,q = {},param){
     if(isNullorUndefined(param)) {
       let prevIndex, nextIndex;
       if (query.hasOwnProperty('_count') && query.hasOwnProperty('_index') && name !== "self") {
-        prevIndex = parseInt(query._index) - parseInt(query._count);
+        prevIndex = parseInt(query._index) - parseInt(query._count); prevIndex = prevIndex < 0 ? 0 : prevIndex;
         nextIndex = parseInt(query._index) + parseInt(query._count);
-        if (name === "prev") {query._index = prevIndex} else {query._index = nextIndex}
+        if (name === "prev") {query._index = prevIndex; resObj.prev = prevIndex} else {query._index = nextIndex; resObj.next = nextIndex;}
       }
       else if (query.hasOwnProperty('_count') && name !== "self") {
         //prevIndex = parseInt(query._index) - parseInt(query._count);
         nextIndex = parseInt(query._index) + parseInt(query._count);
-        if (name === "prev") {query._index = prevIndex} else {query._index = nextIndex}
+        if (name === "prev") {query._index = prevIndex; resObj.prev = prevIndex} else {query._index = nextIndex;  resObj.next = nextIndex;}
       }
       else if (query.hasOwnProperty('_index') && name !== "self") {
-        prevIndex = parseInt(query._index) - DEFAULT_COUNT;
+        prevIndex = parseInt(query._index) - DEFAULT_COUNT; prevIndex = prevIndex < 0 ? 0 : prevIndex;
         nextIndex = parseInt(query._index) + DEFAULT_COUNT;
-        if (name === "prev") {query._index = prevIndex} else {query._index = nextIndex}
+        if (name === "prev") {query._index = prevIndex; resObj.prev = prevIndex;} else {query._index = nextIndex;resObj.next = nextIndex;}
       }
       else if (isNullorUndefined(query)) {
         nextIndex = DEFAULT_COUNT;
-        if (name === "next") {query._index = nextIndex}
+        if (name === "next") {query._index = nextIndex; resObj.next = nextIndex;}
       }
       queryString = Object.keys(query).map(key => key + '=' + query[key]).join('&');
       queryString = isNullorUndefined(queryString) ? '' : '?'+ queryString;
