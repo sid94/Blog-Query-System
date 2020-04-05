@@ -158,7 +158,8 @@ function findInfoById(app,category) {
       let arr = await app.locals.model.find(category,req.params);
       if(!isNullorUndefined(arr)){
         let obj = arr[0];
-        obj.links = [hateoas(reqUrl,'self','self')];
+        let a = hateoas(reqUrl,'self','self');a.href = a.url; delete a.url;
+        obj.links = [a];
         resObj[category] = obj;
         res.send(resObj);
       }else{res.json({ [category] : arr })}
