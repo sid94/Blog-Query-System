@@ -126,7 +126,7 @@ function categoryInfo(app) {
         if(catObj.length >=  q._count){const nextLink = hateoas(reqUrl,'next','next',queryS,"",resObj);links.push(nextLink); }
       }
       else if(q.hasOwnProperty('_index')){
-        if(catObj.length > 0 && catObj.length >= q._index) { const nextLink = hateoas(reqUrl,'next','next',q,"",resObj);links.push(nextLink); }
+        if(catObj.length > 0 && catObj.length >= DEFAULT_COUNT) { const nextLink = hateoas(reqUrl,'next','next',q,"",resObj);links.push(nextLink); }
         if(q._index > 0){const prevLink = hateoas(reqUrl,'prev','prev',q,"",resObj);links.push(prevLink);}
       }
       else if(!q.hasOwnProperty('_count') && !q.hasOwnProperty('_index') && !isNullorUndefined(q)){
