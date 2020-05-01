@@ -1,0 +1,96 @@
+:root {
+  --base-color: 0, 0, 192;
+  --color09: rgb(var(--base-color));
+  --color01: rgba(var(--base-color), 0.05);
+  --color02: rgba(var(--base-color), 0.1);
+  --color03: rgba(var(--base-color), 0.15);
+  --color04: rgba(var(--base-color), 0.3);
+  --max-width: 800px;
+}
+
+body {
+  color: var(--color09);
+  background-color: var(--color01);
+  max-width: var(--max-width);
+}
+
+.scroll {
+  font-size: 150%;
+  padding: 10pt 0pt;
+  width: 100%;
+}
+
+.scroll a[rel="prev"] {
+  float: left;
+}
+.scroll a[rel="next"] {
+  float: right;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+table th {
+  background-color: var(--color04);
+}
+
+table th,
+table td {
+  padding: 4pt 20pt;
+}
+
+table .numeric {
+  text-align: right;
+}
+table tr:nth-child(even) {
+  background-color: var(--color02);
+}
+table tr:nth-child(odd) {
+  background-color: var(--color03);
+}
+
+h1 {
+  text-align: center;
+}
+
+form {
+  display: grid;
+  grid-template-columns: 0.5fr 1fr;
+  grid-gap: 2vw;
+}
+
+ /* display: grid does not work with fieldset in chrome;
+    see <https://codepen.io/davatron5000/pen/LLdYBm>
+  */
+form .interval { 
+  display: grid;
+  grid-template-columns: 0.2fr 1fr;
+  grid-gap: 1vw 3pt;
+  padding: 4px;
+  width: 50%;
+  border: 1px solid black;
+}
+
+input {
+  width: 50%;
+}
+
+label {
+  font-weight: bold;
+  text-align: right;
+}
+
+
+.error {
+  color: red;
+}
+
+footer li {
+  list-style: none;
+  display: inline;
+}
+footer li + li::before {
+  content: " | ";
+}
+
