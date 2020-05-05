@@ -17,12 +17,9 @@
 	  {{#isSearch}}
 	     <label for="{{id}}">{{label}}</label>
 	     <div>
-      	    <input name="{{name}}" id="{{id}}" value="{{value}}">
-      	    {{#errorMessage}}
-                <div class="error">{{errorMessage}}</div>
-            {{/errorMessage}}
+      	    <input name="{{name}}" {{#id}}id="{{id}}"{{/id}} value="{{value}}">
+           <div class="error" {{#errId}}id="{{errId}}"{{/errId}}>{{errorMessage}}</div>
          </div>
-
 	  {{/isSearch}}
 	 {{/fields}}
 
@@ -30,5 +27,6 @@
       <input name="submit" type="submit" value="search" class="control">
     </form>
     {{>footer}}
+    <script src="/js/usr-check.js" ></script>
   </body>
 </html>

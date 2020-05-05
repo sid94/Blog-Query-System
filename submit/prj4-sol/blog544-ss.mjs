@@ -17,8 +17,8 @@ export default function serve(port, ws) {
   const app = express();
   app.locals.port = port;
   app.locals.ws = ws;       //web service wrapper
-  //process.chdir(__dirname); //so paths relative to this dir work
-  process.chdir("C:\\Siddhesh\\projects\\i544\\submit\\prj4-sol");
+  process.chdir(__dirname); //so paths relative to this dir work
+  //process.chdir("C:\\Siddhesh\\projects\\i544\\submit\\prj4-sol");
   setupTemplates(app);
   setupRoutes(app);
   app.listen(port, function() {
@@ -52,11 +52,18 @@ function doErrors(app) {
 
 function listUsers(app,category) {
   return async function(req, res) {
-    let users = await app.locals.ws.list(category,req.query || {});
-    users = dateFormattersAdd(users);
-    users = nextprev(users,req.query);
-    const html = doMustache(app, 'summary',users);
-    res.send(html);
+    let resObj = undefined;
+    if(req.query.hasOwnProperty("_json")){
+      delete req.query["_json"];
+      resObj = await app.locals.ws.list(category,req.query || {});
+      await res.json(resObj);
+    }else {
+      resObj = await app.locals.ws.list(category,req.query || {});
+      resObj = dateFormattersAdd(resObj);
+      resObj = nextprev(resObj,req.query);
+      const html = doMustache(app, 'summary',resObj);
+      res.send(html);
+    }
   };
 }
 
@@ -80,7 +87,7 @@ function doSearch(app,category) {
           errors = wsErrors(err);
         }
         if (Object.keys(errors).length === 0 && Object.keys(resObj).length > 0 &&  resObj.users.length === 0 ) {
-          errors = {_: 'no users found for specified criteria; please retry'};
+          errors = {_: 'No users found for specified query'};
         }
       }
     }
@@ -106,6 +113,7 @@ function fieldsWithValues(values, errors={}) {
     const name = info.name;
     const extraInfo = { value: values[name] };
     if (errors[name]) extraInfo.errorMessage = errors[name];
+    if(name === "id"){ extraInfo.id = "userId" ; extraInfo.errId = "userIdErr" }
     return Object.assign(extraInfo, info);
   });
 }
