@@ -17,8 +17,8 @@ export default function serve(port, ws) {
   const app = express();
   app.locals.port = port;
   app.locals.ws = ws;       //web service wrapper
-  process.chdir(__dirname); //so paths relative to this dir work
-  //process.chdir("C:\\Siddhesh\\projects\\i544\\submit\\prj4-sol");
+  //process.chdir(__dirname); //so paths relative to this dir work
+  process.chdir("C:\\Siddhesh\\projects\\i544\\submit\\prj4-sol");
   setupTemplates(app);
   setupRoutes(app);
   app.listen(port, function() {
